@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS = -std=c99 -Wall
+CFLAGS = -std=gnu99 -Wall
 CC_CMD = $(CC) $(CFLAGS) -o $@ -c $<
 
 %.o: client/%.c

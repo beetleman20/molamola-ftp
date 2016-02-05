@@ -13,5 +13,6 @@ extern struct cmd_info cmd_list[];
 
 struct cmd_info *get_cmd_info(char *cmd_name);
 
-int handler_auth(int sockfd, char *argv);
-int handler_exit(int, char *);
+int handler_open(int sockfd, char *arg);
+int handler_auth(int sockfd, char *arg);
+int handler_exit(int sockfd, char *arg);
