@@ -3,11 +3,15 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include "command_handlers.h"
+#include "readwrite.h"
+
+int handler_mola(int sockfd, char *arg);
 
 struct cmd_info cmd_list[] = {
         {"open", false, handler_open, 2},
         {"auth", false, handler_auth, 2},
         {"quit", false, handler_exit, 0},
+        {"mola", false, handler_mola, 1},
 };
 
 struct cmd_info *get_cmd_info(char *cmd_name)
@@ -18,6 +22,17 @@ struct cmd_info *get_cmd_info(char *cmd_name)
         }
 
         return NULL;
+}
+
+/* for debug only */
+int handler_mola(int sockfd, char *arg)
+{
+        swrite(sockfd, arg, strlen(arg));
+        char *buf = calloc(9, sizeof(char));
+        sread(sockfd, buf, 8);
+        puts(buf);
+        free(buf);
+        return 1;
 }
 
 int handler_open(int sockfd, char *arg)
