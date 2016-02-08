@@ -1,15 +1,20 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "request_handlers.h"
 #include "readwrite.h"
 
 void dedicated_serve(int sockfd)
 {
-        ssize_t head_bufsize = 8;
-        char *head_buf = malloc(head_bufsize);
-        while (sread(sockfd, head_buf, head_bufsize) != -1) {
+        struct message_s head_recv;
+        while (read_head(sockfd, &head_recv) != -1) {
                 puts("read complete");
-                swrite(sockfd, "BJ! ", 4);
-                swrite(sockfd, head_buf, 8);
+                req_handler handler = get_handler(head_recv.type);
+                printf("Received request: %02x\n", head_recv.type);
+                if (!handler) {
+                        printf("Request %02x is malformmated\n", head_recv.type);
+                }
+                handler(sockfd, &head_recv);
         }
-        free(head_buf);
+        /* reach head means client closed */
 }
+

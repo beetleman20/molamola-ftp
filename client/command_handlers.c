@@ -4,6 +4,13 @@
 #include <arpa/inet.h>
 #include "command_handlers.h"
 #include "readwrite.h"
+#include "protocol_utils.h"
+
+/*
+ * Functions that handle specific commands
+ * The spec is not specific on the status field of some command.  Here I assume
+ * 0x01 in those cases.
+ */
 
 int handler_mola(int sockfd, char *arg);
 
@@ -27,7 +34,7 @@ struct cmd_info *get_cmd_info(char *cmd_name)
 /* for debug only */
 int handler_mola(int sockfd, char *arg)
 {
-        swrite(sockfd, arg, strlen(arg));
+        swrite(sockfd, arg, 8);
         char *buf = calloc(9, sizeof(char));
         sread(sockfd, buf, 8);
         puts(buf);
@@ -56,7 +63,6 @@ int handler_open(int sockfd, char *arg)
         /* TODO: validate port */
         dest_addr.sin_port = htons(atoi(dest_port));
 
-        // don't forget to error check the connect()!
         if (connect(sockfd, (struct sockaddr *)&dest_addr,
             sizeof(struct sockaddr)) == -1) {
                 perror("Error establishing connection");
@@ -67,7 +73,20 @@ int handler_open(int sockfd, char *arg)
 
 int handler_auth(int sockfd, char *arg)
 {
-        return 0;
+        struct message_s recv_msg;
+        write_head(sockfd, TYPE_AUTH, 0x01, strlen(arg));
+        swrite(sockfd, arg, strlen(arg));
+        read_head(sockfd, &recv_msg);
+        if (recv_msg.status == 1) {
+                puts("auth ok");
+                return 1;
+        } else if (recv_msg.status == 0) {
+                puts("auth fail");
+                return 0;
+        } else {
+                puts("unknown reply from server");
+                return 0;
+        }
 }
 
 int handler_exit(int sockfd, char *argv)

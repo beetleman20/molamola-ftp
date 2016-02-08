@@ -11,11 +11,11 @@
 /*
  * guarantee len bytes read from sockfd
  */
-int swrite(int sockfd, char *buf, unsigned int len)
+int swrite(int sockfd, void *buf, unsigned int len)
 {
         ssize_t ret;
         while (len > 0 && (ret = write(sockfd, buf, len)) != 0) {
-                printf("somthing written\n");
+                printf("somthing written %d\n", ret);
                 /* if other side closed connection, -1 will be recieved
                  * with errno EPIPE */
                 if (ret == -1) {
@@ -33,11 +33,11 @@ int swrite(int sockfd, char *buf, unsigned int len)
 /*
  * guarantee len bytes written to sockfd
  */
-int sread(int sockfd, char *buf, unsigned int len)
+int sread(int sockfd, void *buf, unsigned int len)
 {
         ssize_t ret;
         while (len > 0 && (ret = read(sockfd, buf, len)) != 0) {
-                printf("somthing read\n");
+                printf("somthing read %d\n", ret);
                 if (ret == -1) {
                         if (errno == EINTR)
                                 continue;
