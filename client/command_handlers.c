@@ -3,8 +3,8 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include "command_handlers.h"
-#include "readwrite.h"
-#include "protocol_utils.h"
+#include "common_utils/readwrite.h"
+#include "common_utils/protocol_utils.h"
 
 /*
  * Functions that handle specific commands
@@ -51,13 +51,13 @@ int handler_open(int sockfd, char *arg)
         };
 
         if (!inet_aton(strtok(arg, " "), &(dest_addr.sin_addr))) {
-                puts("invalid ip");
+                fputs("invalid ip", stderr);
                 return 0;
         }
 
         char * dest_port = strtok(NULL, " ");
         if (!dest_port) {
-                puts("Error: Server port not given");
+                fputs("Error: Server port not given", stderr);
                 return 0;
         }
         /* TODO: validate port */
@@ -86,7 +86,7 @@ int handler_auth(int sockfd, char *arg)
                 puts("auth fail");
                 return 0;
         } else {
-                puts("unknown reply from server");
+                fputs("unknown reply from server", stderr);
                 return 0;
         }
 }

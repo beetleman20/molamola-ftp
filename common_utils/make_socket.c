@@ -6,7 +6,7 @@
 
 void error_exit(char *msg)
 {
-        printf("Error: %s\n", msg);
+        fprintf(stderr, "Error: %s\n", msg);
         exit(1);
 }
 

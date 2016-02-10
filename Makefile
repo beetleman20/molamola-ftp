@@ -1,5 +1,5 @@
-CC ?= gcc
-CFLAGS = -std=gnu99 -Wall -I common_utils -g
+CC = gcc
+CFLAGS = -std=gnu99 -Wall -I. -g
 CC_CMD = $(CC) $(CFLAGS) -o $@ -c $<
 
 %.o: client/%.c
@@ -15,11 +15,9 @@ default: client_main server_main
 
 client_main: make_socket.o protocol_utils.o readwrite.o client_main.o repl.o command_handlers.o
 
-server_main: make_socket.o protocol_utils.o readwrite.o accepter.o dedicated.o request_handlers.o
-
-accepter.o: readwrite.o dedicated.o
+server_main: make_socket.o protocol_utils.o readwrite.o accepter.o request_handlers.o
 
 .PHONY: clean
 
 clean:
-	rm *.o client_main
+	rm *.o client_main server_main

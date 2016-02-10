@@ -42,7 +42,6 @@ void command_loop(int sockfd)
                 char *ret = fgets(cmd_buf, sizeof(cmd_buf), stdin);
                 if (!ret) {
                         /* ctrl-D pressed */
-                        puts("ctrl-d!");
                         handler_exit(sockfd, NULL);
                 }
                 if (strcmp(cmd_buf, "\n") == 0)

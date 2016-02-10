@@ -15,7 +15,7 @@ int swrite(int sockfd, void *buf, unsigned int len)
 {
         ssize_t ret;
         while (len > 0 && (ret = write(sockfd, buf, len)) != 0) {
-                printf("somthing written %d\n", ret);
+                // printf("somthing written %d\n", ret);
                 /* if other side closed connection, -1 will be recieved
                  * with errno EPIPE */
                 if (ret == -1) {
@@ -37,7 +37,7 @@ int sread(int sockfd, void *buf, unsigned int len)
 {
         ssize_t ret;
         while (len > 0 && (ret = read(sockfd, buf, len)) != 0) {
-                printf("somthing read %d\n", ret);
+                // printf("somthing read %d\n", ret);
                 if (ret == -1) {
                         if (errno == EINTR)
                                 continue;

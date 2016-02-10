@@ -3,8 +3,22 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include "request_handlers.h"
 #include "accepter.h"
-#include "dedicated.h"
+
+void dedicated_serve(int sockfd)
+{
+        struct message_s head_recv;
+        while (read_head(sockfd, &head_recv) != -1) {
+                req_handler handler = get_handler(head_recv.type);
+                printf("Received request: %02x\n", head_recv.type);
+                if (!handler) {
+                        fprintf(stderr, "Request %02x is malformmated\n", head_recv.type);
+                }
+                handler(sockfd, &head_recv);
+        }
+        /* reach head means client closed */
+}
 
 void mkthread_serve(int sockfd)
 {

@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "request_handlers.h"
-#include "readwrite.h"
-#include "protocol_utils.h"
+#include "common_utils/readwrite.h"
+#include "common_utils/protocol_utils.h"
 #include "server_main.h"
 
 /*
@@ -42,7 +42,6 @@ char *payload_malloc(int sockfd, struct message_s *msg)
          * sendfile() is a library function in sparc machine.
          */
         ssize_t len = msg->length - sizeof(struct message_s);
-        printf("length of payload is %d\n", len);
         char *payload = malloc(len);
         sread(sockfd, payload, len);
         return payload;
