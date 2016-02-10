@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "request_handlers.h"
 #include "readwrite.h"
 #include "protocol_utils.h"
+#include "server_main.h"
 
 /*
  * Functions that handle specific commands
@@ -48,9 +50,34 @@ char *payload_malloc(int sockfd, struct message_s *msg)
 
 int req_auth(int sockfd, struct message_s *msg)
 {
-        puts("trying to authenicate");
         char *payload = payload_malloc(sockfd, msg);
-        printf("%s is trying to authenicate\n", payload);
+        printf("trying to authenicate with %s\n", payload);
+
+        struct user guest;
+        if (!parse_user(payload, &guest))
+                return -1;
+
+        int res = -1;
+        for (int i=0; i < USER_MAX; i++) {
+                if (!user_list[i].id) {
+                        /* reach the end */
+                        res = -1;
+                        break;
+                }
+                if (strcmp(user_list[i].id, guest.id) == 0 &&
+                   (strcmp(user_list[i].passwd, guest.passwd) == 0)) {
+                        /* match */
+                        printf("%s logged in\n", guest.id);
+                        res = 0;
+                        break;
+                }
+        }
         free(payload);
-        return 1;
+
+        if (res == 0)
+                write_head(sockfd, 0xA2, 1, 0);
+        else
+                write_head(sockfd, 0xA2, 0, 0);
+
+        return res;
 }

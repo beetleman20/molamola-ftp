@@ -68,6 +68,8 @@ int handler_open(int sockfd, char *arg)
                 perror("Error establishing connection");
                 return 0;
         }
+
+        /* TODO: send OPEN_CONN_REQUEST */
         return 1;
 }
 
