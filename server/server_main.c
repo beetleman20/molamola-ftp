@@ -51,7 +51,7 @@ int main(int argc, char **argv)
         if (load_users() == -1)
                 error_exit("Error loading user file");
         char *port_str = (argc > 1) ? argv[1] : NULL;
-        int sockfd = make_socket(port_str);
+        int sockfd = make_socket(port_str, 1);
         serve(sockfd);
         return 0;
 }

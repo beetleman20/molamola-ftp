@@ -45,9 +45,7 @@ void accept_loop(int sockfd)
 
 void serve(int sockfd)
 {
-        if (listen(sockfd, 0) &&
-            setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)) < 0
-            ) {
+        if (listen(sockfd, 0) == -1) {
                 perror("Cannot listen");
                 exit(1);
         }

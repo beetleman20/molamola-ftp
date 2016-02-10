@@ -19,11 +19,16 @@ long get_port(char *str)
         return port;
 }
 
-int make_socket(char *port_str)
+int make_socket(char *port_str, int reuse)
 {
         int sockfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd == -1)
                 error_exit(strerror(errno));
+
+        if (reuse) {
+                setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
+                           &(int){ 1 }, sizeof(int));
+        }
 
         if (port_str) {
                 /* bind local port to argv[1] */
