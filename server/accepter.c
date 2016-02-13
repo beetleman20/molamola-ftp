@@ -6,18 +6,51 @@
 #include "request_handlers.h"
 #include "accepter.h"
 
+int wait_authenicated(int sockfd)
+{
+        /* authenicate.  Should only handle "open" and "auth" request */
+        struct message_s head_recv;
+
+        while (read_head(sockfd, &head_recv) != -1) {
+                if (head_recv.type == TYPE_OPEN_REQ) {
+                        /* TODO: reply */
+                } else if (head_recv.type == TYPE_AUTH) {
+                        if (req_auth(sockfd, &head_recv) == 0)
+                                return 0;
+                        else
+                                return -1;
+                } else {
+                        fprintf(stderr,
+                                "client unsuitably sneding Request %02x\n"
+                                "closing connection\n", head_recv.type);
+                        return -1;
+                }
+        }
+
+        return -1;
+}
+
 void dedicated_serve(int sockfd)
 {
+        if (wait_authenicated(sockfd) == -1) {
+                printf("connection closed without authenication\n");
+                return;
+        }
+
+        /* now it is authenicated */
         struct message_s head_recv;
+
         while (read_head(sockfd, &head_recv) != -1) {
                 req_handler handler = get_handler(head_recv.type);
                 printf("Received request: %02x\n", head_recv.type);
                 if (!handler) {
                         fprintf(stderr, "Request %02x is malformmated\n", head_recv.type);
+                        continue;
                 }
                 handler(sockfd, &head_recv);
         }
         /* reach head means client closed */
+        printf("closed connection\n");
 }
 
 void mkthread_serve(int sockfd)

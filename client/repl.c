@@ -31,10 +31,10 @@ void get_cmd_arg(char **cmdname, char **arg, char *line)
         *arg = NULL;
 }
 
-void command_loop(int sockfd)
+void command_loop()
 {
         char cmd_buf[CMD_BUF_SIZE];
-        struct state mystate = {"", 0, sockfd, BABY};
+        struct state mystate = {"", 0, -1, BABY};
 
         while (1) {
                 print_prompt();

@@ -10,6 +10,6 @@ struct state {
         enum status status;
 };
 
-void command_loop(int sockfd);
+void command_loop();
 
 #endif

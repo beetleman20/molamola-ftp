@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <arpa/inet.h>
 #include "repl.h"
 #include "command_handlers.h"
 #include "common_utils/readwrite.h"
 #include "common_utils/protocol_utils.h"
+#include "common_utils/make_socket.h"
 
 /*
  * Functions that handle specific commands
@@ -40,7 +42,7 @@ int handler_mola(struct state *mystate, char *arg)
         sread(mystate->sockfd, buf, 8);
         puts(buf);
         free(buf);
-        return 1;
+        return 0;
 }
 
 int handler_open(struct state *mystate, char *arg)
@@ -53,26 +55,29 @@ int handler_open(struct state *mystate, char *arg)
 
         if (!inet_aton(strtok(arg, " "), &(dest_addr.sin_addr))) {
                 fputs("invalid ip", stderr);
-                return 0;
+                return -1;
         }
 
         char * dest_port = strtok(NULL, " ");
         if (!dest_port) {
                 fputs("Error: Server port not given", stderr);
-                return 0;
+                return -1;
         }
         /* TODO: validate port */
         dest_addr.sin_port = htons(atoi(dest_port));
 
-        if (connect(mystate->sockfd, (struct sockaddr *)&dest_addr,
+        int sockfd = make_socket(NULL, 0);
+        if (connect(sockfd, (struct sockaddr *)&dest_addr,
             sizeof(struct sockaddr)) == -1) {
                 perror("Error establishing connection");
-                return 0;
+                close(sockfd);
+                return -1;
         }
 
         /* TODO: send OPEN_CONN_REQUEST */
+        mystate->sockfd = sockfd;
         mystate->status = OPENED;
-        return 1;
+        return 0;
 }
 
 int handler_auth(struct state *mystate, char *arg)
@@ -84,14 +89,14 @@ int handler_auth(struct state *mystate, char *arg)
         if (recv_msg.status == 1) {
                 puts("auth ok");
                 mystate->status = AUTHED;
-                return 1;
+                return 0;
         } else if (recv_msg.status == 0) {
                 puts("auth fail");
                 mystate->status = BABY;
-                return 0;
+                return -1;
         } else {
                 fputs("unknown reply from server", stderr);
-                return 0;
+                return -1;
         }
 }
 

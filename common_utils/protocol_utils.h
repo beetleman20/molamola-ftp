@@ -1,6 +1,8 @@
 #ifndef PROTOCOL_UTILS_H
 #define PROTOCOL_UTILS_H
 
+#define TYPE_OPEN_REQ 0xA1
+#define TYPE_OPEN_REP 0xA2
 #define TYPE_AUTH 0xA3
 
 extern char fingerprint[];

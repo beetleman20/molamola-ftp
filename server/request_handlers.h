@@ -4,3 +4,5 @@
 typedef int (*req_handler)(int sockfd, struct message_s *msg);
 
 req_handler get_handler(char type_code);
+
+int req_auth(int sockfd, struct message_s *msg);

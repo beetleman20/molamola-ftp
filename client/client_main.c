@@ -4,8 +4,6 @@
 
 int main(int argc, char **argv)
 {
-        char *port_str = (argc > 1) ? argv[1] : NULL;
-        int sockfd = make_socket(port_str, 0);
-        command_loop(sockfd);
+        command_loop();
         return 0;
 }

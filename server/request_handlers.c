@@ -20,7 +20,7 @@ struct req_info {
 };
 
 struct req_info req_list[] = {
-        {TYPE_AUTH, req_auth}
+        //{TYPE_GET, NULL},
 };
 
 req_handler get_handler(char type_code)
@@ -50,7 +50,6 @@ char *payload_malloc(int sockfd, struct message_s *msg)
 int req_auth(int sockfd, struct message_s *msg)
 {
         char *payload = payload_malloc(sockfd, msg);
-        printf("trying to authenicate with %s\n", payload);
 
         struct user guest;
         if (!parse_user(payload, &guest))
