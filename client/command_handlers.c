@@ -16,12 +16,14 @@
  */
 
 int handler_mola(struct state *mystate, char *arg);
+int handler_get(struct state *mystate, char *arg);
 
 struct cmd_info cmd_list[] = {
         {"open", BABY, handler_open, 2},
         {"auth", OPENED, handler_auth, 2},  /* TODO: change it to OPENED */
         {"quit", ANY, handler_exit, 0},
         {"mola", ANY, handler_mola, 1},
+        {"get", AUTHED, handler_get, 1},
 };
 
 struct cmd_info *get_cmd_info(char *cmd_name)
@@ -83,7 +85,7 @@ int handler_open(struct state *mystate, char *arg)
 int handler_auth(struct state *mystate, char *arg)
 {
         struct message_s recv_msg;
-        write_head(mystate->sockfd, TYPE_AUTH, 0x01, strlen(arg));
+        write_head(mystate->sockfd, TYPE_AUTH, STATUS_UNUSED, strlen(arg));
         swrite(mystate->sockfd, arg, strlen(arg));
         read_head(mystate->sockfd, &recv_msg);
         if (recv_msg.status == 1) {
@@ -93,6 +95,24 @@ int handler_auth(struct state *mystate, char *arg)
         } else if (recv_msg.status == 0) {
                 puts("auth fail");
                 mystate->status = BABY;
+                return -1;
+        } else {
+                fputs("unknown reply from server", stderr);
+                return -1;
+        }
+}
+
+int handler_get(struct state *mystate, char *arg)
+{
+        struct message_s recv_msg;
+        write_head(mystate->sockfd, TYPE_GET_REQ, STATUS_UNUSED, strlen(arg));
+        swrite(mystate->sockfd, arg, strlen(arg));
+        read_head(mystate->sockfd, &recv_msg);
+        if (recv_msg.status == 1) {
+                puts("file exists");
+                return 0;
+        } else if (recv_msg.status == 0) {
+                puts("file not exists");
                 return -1;
         } else {
                 fputs("unknown reply from server", stderr);

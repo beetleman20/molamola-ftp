@@ -4,6 +4,10 @@
 #define TYPE_OPEN_REQ 0xA1
 #define TYPE_OPEN_REP 0xA2
 #define TYPE_AUTH 0xA3
+#define TYPE_GET_REQ 0xA7
+#define TYPE_GET_REP 0xA8
+
+#define STATUS_UNUSED 0x00
 
 extern char fingerprint[];
 

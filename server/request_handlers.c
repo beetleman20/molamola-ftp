@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include "request_handlers.h"
 #include "common_utils/readwrite.h"
@@ -13,6 +14,7 @@
  */
 
 int req_auth(int sockfd, struct message_s *msg);
+int req_get(int sockfd, struct message_s *msg);
 
 struct req_info {
         char type_code;
@@ -20,7 +22,7 @@ struct req_info {
 };
 
 struct req_info req_list[] = {
-        //{TYPE_GET, NULL},
+        {TYPE_GET_REQ, req_get},
 };
 
 req_handler get_handler(char type_code)
@@ -78,4 +80,16 @@ int req_auth(int sockfd, struct message_s *msg)
                 write_head(sockfd, 0xA2, 0, 0);
 
         return res;
+}
+
+int req_get(int sockfd, struct message_s *msg)
+{
+        char *filename = payload_malloc(sockfd, msg);
+        if (access(filename, R_OK) != 0) {
+                write_head(sockfd, TYPE_GET_REP, 0, 0);
+                return -1;
+        }
+        write_head(sockfd, TYPE_GET_REP, 1, 0);
+
+        return 0;
 }
