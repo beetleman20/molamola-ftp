@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/sendfile.h>
 #include "readwrite.h"
 
 /*
@@ -52,4 +54,51 @@ int sread(int sockfd, void *buf, unsigned int len)
                 len -= ret;
         }
         return 1;
+}
+
+/*
+ * copy file by the os kernel
+ * this function is modified from "vsftpd, ftpdataio.c" 
+ */
+int transfer_file_sys(int out_fd, int in_fd, off_t num_send)
+{
+        while (num_send > 0) {
+                unsigned int send_this_time;
+                if (num_send > DATA_BUFSIZE) {
+                        send_this_time = DATA_BUFSIZE;
+                } else {
+                        send_this_time = (unsigned int) num_send;
+                }
+                int ret = sendfile(out_fd, in_fd, NULL, send_this_time);
+                if (ret == -1 || ret == 0)
+                        return -1;
+                num_send -= ret;
+        }
+        return 0;
+}
+
+/*
+ * a slower version, but cross platform
+ */
+int transfer_file_copy(int out_fd, int in_fd, off_t num_send)
+{
+        void *buf = malloc(DATA_BUFSIZE);
+        if (!buf) {
+                perror("malloc error");
+                exit(1);
+        }
+        while (num_send > 0) {
+                unsigned int send_this_time;
+                if (num_send > DATA_BUFSIZE) {
+                        send_this_time = DATA_BUFSIZE;
+                } else {
+                        send_this_time = (unsigned int) num_send;
+                }
+                if (sread(in_fd, buf, send_this_time) == -1)
+                        return -1;
+                if (swrite(out_fd, buf, send_this_time) == -1)
+                        return -1;
+                num_send -= send_this_time;
+        }
+        return 0;
 }

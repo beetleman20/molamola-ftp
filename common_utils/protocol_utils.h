@@ -1,3 +1,5 @@
+#include <sys/types.h>
+
 #ifndef PROTOCOL_UTILS_H
 #define PROTOCOL_UTILS_H
 
@@ -6,6 +8,7 @@
 #define TYPE_AUTH 0xA3
 #define TYPE_GET_REQ 0xA7
 #define TYPE_GET_REP 0xA8
+#define TYPE_FILE_DATA 0xFF
 
 #define STATUS_UNUSED 0x00
 
@@ -19,6 +22,7 @@ struct message_s {
 }  __attribute__ ((packed));
 
 int write_head(int sockfd, char type, char status, int length);
-int read_head(int sockfd, struct message_s *msg);;
+int read_head(int sockfd, struct message_s *msg);
+off_t payload_size(struct message_s *msg);
 
 #endif

@@ -18,3 +18,8 @@ int read_head(int sockfd, struct message_s *msg)
 {
         return sread(sockfd, msg, sizeof(struct message_s));
 }
+
+off_t payload_size(struct message_s *msg)
+{
+        return msg->length - sizeof(struct message_s);
+}
