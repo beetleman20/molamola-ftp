@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include "repl.h"
 #include "command_handlers.h"
 #include "common_utils/readwrite.h"
 #include "common_utils/protocol_utils.h"
@@ -12,13 +13,13 @@
  * 0x01 in those cases.
  */
 
-int handler_mola(int sockfd, char *arg);
+int handler_mola(struct state *mystate, char *arg);
 
 struct cmd_info cmd_list[] = {
-        {"open", false, handler_open, 2},
-        {"auth", false, handler_auth, 2},
-        {"quit", false, handler_exit, 0},
-        {"mola", false, handler_mola, 1},
+        {"open", BABY, handler_open, 2},
+        {"auth", OPENED, handler_auth, 2},  /* TODO: change it to OPENED */
+        {"quit", ANY, handler_exit, 0},
+        {"mola", ANY, handler_mola, 1},
 };
 
 struct cmd_info *get_cmd_info(char *cmd_name)
@@ -32,17 +33,17 @@ struct cmd_info *get_cmd_info(char *cmd_name)
 }
 
 /* for debug only */
-int handler_mola(int sockfd, char *arg)
+int handler_mola(struct state *mystate, char *arg)
 {
-        swrite(sockfd, arg, 8);
+        swrite(mystate->sockfd, arg, 8);
         char *buf = calloc(9, sizeof(char));
-        sread(sockfd, buf, 8);
+        sread(mystate->sockfd, buf, 8);
         puts(buf);
         free(buf);
         return 1;
 }
 
-int handler_open(int sockfd, char *arg)
+int handler_open(struct state *mystate, char *arg)
 {
         puts("connecting...");
 
@@ -63,27 +64,30 @@ int handler_open(int sockfd, char *arg)
         /* TODO: validate port */
         dest_addr.sin_port = htons(atoi(dest_port));
 
-        if (connect(sockfd, (struct sockaddr *)&dest_addr,
+        if (connect(mystate->sockfd, (struct sockaddr *)&dest_addr,
             sizeof(struct sockaddr)) == -1) {
                 perror("Error establishing connection");
                 return 0;
         }
 
         /* TODO: send OPEN_CONN_REQUEST */
+        mystate->status = OPENED;
         return 1;
 }
 
-int handler_auth(int sockfd, char *arg)
+int handler_auth(struct state *mystate, char *arg)
 {
         struct message_s recv_msg;
-        write_head(sockfd, TYPE_AUTH, 0x01, strlen(arg));
-        swrite(sockfd, arg, strlen(arg));
-        read_head(sockfd, &recv_msg);
+        write_head(mystate->sockfd, TYPE_AUTH, 0x01, strlen(arg));
+        swrite(mystate->sockfd, arg, strlen(arg));
+        read_head(mystate->sockfd, &recv_msg);
         if (recv_msg.status == 1) {
                 puts("auth ok");
+                mystate->status = AUTHED;
                 return 1;
         } else if (recv_msg.status == 0) {
                 puts("auth fail");
+                mystate->status = BABY;
                 return 0;
         } else {
                 fputs("unknown reply from server", stderr);
@@ -91,7 +95,7 @@ int handler_auth(int sockfd, char *arg)
         }
 }
 
-int handler_exit(int sockfd, char *argv)
+int handler_exit(struct state *mystate, char *argv)
 {
         /* TODO: close socket */
         puts("bye");

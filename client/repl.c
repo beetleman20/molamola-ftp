@@ -34,7 +34,7 @@ void get_cmd_arg(char **cmdname, char **arg, char *line)
 void command_loop(int sockfd)
 {
         char cmd_buf[CMD_BUF_SIZE];
-        struct state mystate = {"", 0};
+        struct state mystate = {"", 0, sockfd, BABY};
 
         while (1) {
                 print_prompt();
@@ -42,17 +42,22 @@ void command_loop(int sockfd)
                 char *ret = fgets(cmd_buf, sizeof(cmd_buf), stdin);
                 if (!ret) {
                         /* ctrl-D pressed */
-                        handler_exit(sockfd, NULL);
+                        handler_exit(&mystate, NULL);
                 }
                 if (strcmp(cmd_buf, "\n") == 0)
                         continue;
 
                 char *cmdname, *arg;
                 get_cmd_arg(&cmdname, &arg, cmd_buf);
-                //if (arg)
                 struct cmd_info *ci = get_cmd_info(cmdname);
+
                 if (!ci) {
                         printf("invalid command %s\n", cmdname);
+                        continue;
+                }
+
+                if (ci->req_status != ANY && ci->req_status != mystate.status) {
+                        printf("cannot use command \"%s\" now\n", cmdname);
                         continue;
                 }
 
@@ -61,6 +66,6 @@ void command_loop(int sockfd)
                         continue;
                 }
 
-                ci->handler(sockfd, arg);
+                ci->handler(&mystate, arg);
         }
 }
