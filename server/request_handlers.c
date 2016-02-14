@@ -15,6 +15,7 @@
 
 int req_auth(int sockfd, struct message_s *msg);
 int req_get(int sockfd, struct message_s *msg);
+int req_put(int sockfd, struct message_s *msg);
 
 struct req_info {
         char type_code;
@@ -23,6 +24,7 @@ struct req_info {
 
 struct req_info req_list[] = {
         {TYPE_GET_REQ, req_get},
+        {TYPE_PUT_REQ, req_put},
 };
 
 /*
@@ -31,11 +33,6 @@ struct req_info req_list[] = {
 void sread_C(int threadfd, void *buf, unsigned int len)
 {
         if (sread(threadfd, buf, len) == -1)
-                close_serving_thread(threadfd);
-}
-void transfer_file_sys_C(int threadfd, int out_fd, int in_fd, off_t num_send)
-{
-        if (transfer_file_sys(out_fd, in_fd, num_send) == -1)
                 close_serving_thread(threadfd);
 }
 
@@ -100,27 +97,48 @@ int req_auth(int sockfd, struct message_s *msg)
 int req_get(int sockfd, struct message_s *msg)
 {
         char *filepath = payload_malloc(sockfd, msg, true);
-        if (access(filepath, R_OK) != 0) {
-                write_head(sockfd, TYPE_GET_REP, 0, 0);
-                /* though not readable, marked as success because it is legal */
-                return 0;
-        }
-        /* send GET_REPLY header */
-        write_head(sockfd, TYPE_GET_REP, 1, 0);
-
         int local_fd = open(filepath, O_RDONLY);
+        free(filepath);
         if (local_fd == -1) {
-                /* maybe using up file descriptor, etc... */
-                perror("error opening file");
+                write_head(sockfd, TYPE_GET_REP, 0, 0);
+                /* though not readable, don't terminate because it is legal */
                 return -1;
         }
+        /* send GET_REPLY success header */
+        write_head(sockfd, TYPE_GET_REP, 1, 0);
 
         struct stat st;
-        stat(filepath, &st);
+        fstat(local_fd, &st);
         /* send FILE_DATA header */
         write_head(sockfd, TYPE_FILE_DATA, STATUS_UNUSED, st.st_size);
-        transfer_file_sys_C(sockfd, sockfd, local_fd, st.st_size);
-
+        int ret = transfer_file_sys(sockfd, local_fd, st.st_size);
         close(local_fd);
+        if (ret == -1)
+                close_serving_thread(sockfd);
+
+        return 0;
+}
+
+int req_put(int sockfd, struct message_s *msg)
+{
+        char *filepath = payload_malloc(sockfd, msg, true);
+        int saveto_fd = open(filepath, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
+        if (saveto_fd == -1) {
+                perror("cannot open file to write");
+                close_serving_thread(sockfd);
+        }
+        /* always says that you can upload */
+        write_head(sockfd, TYPE_PUT_REP, 1, 0);
+
+        /* receive DATA_FILE */
+        struct message_s recv_msg;
+        read_head(sockfd, &recv_msg);
+
+        off_t size = payload_size(&recv_msg);
+        int ret = transfer_file_copy(saveto_fd, sockfd, size);
+        close(saveto_fd);
+        if (ret == -1)
+                close_serving_thread(sockfd);
+
         return 0;
 }

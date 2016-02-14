@@ -9,6 +9,8 @@
 #define TYPE_AUTH_REP 0xA4
 #define TYPE_GET_REQ 0xA7
 #define TYPE_GET_REP 0xA8
+#define TYPE_PUT_REQ 0xA9
+#define TYPE_PUT_REP 0xAA
 #define TYPE_FILE_DATA 0xFF
 
 #define STATUS_UNUSED 0x00

@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/stat.h>
 #include "repl.h"
 #include "command_handlers.h"
 #include "common_utils/readwrite.h"
@@ -19,6 +20,7 @@
 
 int handler_mola(struct state *mystate, char *arg);
 int handler_get(struct state *mystate, char *arg);
+int handler_put(struct state *mystate, char *arg);
 
 struct cmd_info cmd_list[] = {
         {"open", BABY, handler_open, 2},
@@ -26,6 +28,7 @@ struct cmd_info cmd_list[] = {
         {"quit", ANY, handler_exit, 0},
         {"mola", ANY, handler_mola, 1},
         {"get", AUTHED, handler_get, 1},
+        {"put", AUTHED, handler_put, 1},
 };
 
 struct cmd_info *get_cmd_info(char *cmd_name)
@@ -134,10 +137,37 @@ int handler_get(struct state *mystate, char *filepath)
 
         off_t size = payload_size(&recv_msg);
         if (transfer_file_copy(saveto_fd, mystate->sockfd, size) == -1) {
-                perror("error sending file");
+                perror("error getting file");
                 return -1;
         }
         close(saveto_fd);
+
+        return 0;
+}
+
+int handler_put(struct state *mystate, char *filepath)
+{
+        int local_fd = open(filepath, O_RDONLY);
+        if (local_fd == -1) {
+                printf("cannot read local file %s\n", filepath);
+                return -1;
+        }
+        /* send PUT_REQUEST and recieve PUT_REPLY */
+        write_head(mystate->sockfd, TYPE_PUT_REQ, STATUS_UNUSED, strlen(filepath));
+        swrite(mystate->sockfd, filepath, strlen(filepath));
+        struct message_s recv_msg;
+        read_head(mystate->sockfd, &recv_msg);  /* recvmsg.status is useless here */
+
+        /* send FILE_DATA */
+        struct stat st;
+        fstat(local_fd, &st);
+        write_head(mystate->sockfd, TYPE_FILE_DATA, STATUS_UNUSED, st.st_size);
+        int ret = transfer_file_sys(mystate->sockfd, local_fd, st.st_size);
+        close(local_fd);
+        if (ret == -1) {
+                perror("error uploading file");
+                return -1;
+        }
 
         return 0;
 }
