@@ -1,0 +1,44 @@
+= molamola-ftp, a insecure file transfer program
+
+== Build
+----
+make
+----
+
+`make debug` can build a debug version.
+
+== Run program
+Copy server_main to the server, run
+----
+./server_main [your_desired_port]
+----
+
+For example, your_desired_port can be _3333_
+
+Copy client_main to the server, and following is sample session:
+----
+$ dd if=/dev/urandom of=rand bs=1M count=20
+20+0 records in
+20+0 records out
+20971520 bytes (21 MB) copied, 9.04381 s, 2.3 MB/s
+
+~/build/csci4430 9s
+$ ./client_main               
+>>> open 127.0.0.1 3333
+connecting...
+>>> auth tux quork
+auth ok
+>>> put rand
+100% completed
+>>> bye   _# ctrl-D is pressed_
+----
+
+`get [your_file]` can retrieve a file
+
+
+[WARNING]
+====
+* The Makefile is lazily written.  Dependency is not specified well.  So wierd bug may arise.
+  When you make any change in function interface, make sure to `make -B` to force rebuild.
+* This is an CUHK CS assignment.  *NOT* for secure usage.
+====
