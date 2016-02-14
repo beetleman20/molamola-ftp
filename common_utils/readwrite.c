@@ -17,7 +17,9 @@ int swrite(int fd, void *buf, unsigned int len)
 {
         ssize_t ret;
         while (len > 0 && (ret = write(fd, buf, len)) != 0) {
-                printf("somthing written %d\n", ret);
+#ifdef _DEBUG
+                printf("somthing written with swrite, size %d\n", ret);
+#endif
                 /* if other side closed connection, -1 will be recieved
                  * with errno EPIPE */
                 if (ret == -1) {
@@ -40,7 +42,9 @@ int sread(int fd, void *buf, unsigned int len)
         ssize_t ret;
         while (len > 0) {
                 ret = read(fd, buf, len);
-                printf("somthing read %d\n", ret);
+#ifdef _DEBUG
+                printf("somthing read with sread, size %d\n", ret);
+#endif
                 if (ret == -1) {
                         if (errno == EINTR)
                                 continue;
@@ -60,19 +64,24 @@ int sread(int fd, void *buf, unsigned int len)
  * copy file by the os kernel, in_fd must NOT be socket
  * this function is modified from "vsftpd, ftpdataio.c" 
  */
-int transfer_file_sys(int out_fd, int in_fd, off_t num_send)
+int transfer_file_sys(int out_fd, int in_fd, off_t size_remain,
+                      void (*progress)(double percent))
 {
-        while (num_send > 0) {
+        off_t orig_size= size_remain;
+        while (size_remain > 0) {
                 unsigned int send_this_time;
-                if (num_send > DATA_BUFSIZE) {
+                if (size_remain > DATA_BUFSIZE) {
                         send_this_time = DATA_BUFSIZE;
                 } else {
-                        send_this_time = (unsigned int) num_send;
+                        send_this_time = (unsigned int) size_remain;
                 }
                 int ret = sendfile(out_fd, in_fd, NULL, send_this_time);
                 if (ret == -1 || ret == 0)
                         return -1;
-                num_send -= ret;
+                size_remain -= ret;
+
+                if (progress != NULL)
+                        progress((orig_size-size_remain)/(double)orig_size);
         }
         return 0;
 }
@@ -80,25 +89,30 @@ int transfer_file_sys(int out_fd, int in_fd, off_t num_send)
 /*
  * a slower version, but cross platform
  */
-int transfer_file_copy(int out_fd, int in_fd, off_t num_send)
+int transfer_file_copy(int out_fd, int in_fd, off_t size_remain,
+                      void (*progress)(double percent))
 {
         void *buf = malloc(DATA_BUFSIZE);
         if (!buf) {
                 perror("malloc error");
                 exit(1);
         }
-        while (num_send > 0) {
+        off_t orig_size= size_remain;
+        while (size_remain > 0) {
                 unsigned int send_this_time;
-                if (num_send > DATA_BUFSIZE) {
+                if (size_remain > DATA_BUFSIZE) {
                         send_this_time = DATA_BUFSIZE;
                 } else {
-                        send_this_time = (unsigned int) num_send;
+                        send_this_time = (unsigned int) size_remain;
                 }
                 if (sread(in_fd, buf, send_this_time) == -1)
                         return -1;
                 if (swrite(out_fd, buf, send_this_time) == -1)
                         return -1;
-                num_send -= send_this_time;
+                size_remain -= send_this_time;
+
+                if (progress != NULL)
+                        progress((orig_size-size_remain)/(double)orig_size);
         }
         return 0;
 }

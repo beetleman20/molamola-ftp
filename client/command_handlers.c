@@ -41,6 +41,11 @@ struct cmd_info *get_cmd_info(char *cmd_name)
         return NULL;
 }
 
+void prog(double percent)
+{
+        printf("\r%3.0f%% completed", percent*100);
+}
+
 /* for debug only */
 int handler_mola(struct state *mystate, char *arg)
 {
@@ -136,11 +141,13 @@ int handler_get(struct state *mystate, char *filepath)
         }
 
         off_t size = payload_size(&recv_msg);
-        if (transfer_file_copy(saveto_fd, mystate->sockfd, size) == -1) {
+        int ret = transfer_file_copy(saveto_fd, mystate->sockfd, size, prog);
+        puts("");
+        close(saveto_fd);
+        if (ret == -1) {
                 perror("error getting file");
                 return -1;
         }
-        close(saveto_fd);
 
         return 0;
 }
@@ -162,7 +169,8 @@ int handler_put(struct state *mystate, char *filepath)
         struct stat st;
         fstat(local_fd, &st);
         write_head(mystate->sockfd, TYPE_FILE_DATA, STATUS_UNUSED, st.st_size);
-        int ret = transfer_file_sys(mystate->sockfd, local_fd, st.st_size);
+        int ret = transfer_file_sys(mystate->sockfd, local_fd, st.st_size, prog);
+        puts("");
         close(local_fd);
         if (ret == -1) {
                 perror("error uploading file");

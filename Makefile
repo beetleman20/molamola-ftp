@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=gnu99 -Wall -I. -g
+CFLAGS = -std=gnu99 -Wall -I. -Og
 CC_CMD = $(CC) $(CFLAGS) -o $@ -c $<
 
 %.o: client/%.c
@@ -10,6 +10,9 @@ CC_CMD = $(CC) $(CFLAGS) -o $@ -c $<
 
 %.o: common_utils/%.c
 	$(CC_CMD)
+
+debug: CFLAGS += -D_DEBUG -g
+debug: default
 
 default: client_main server_main
 

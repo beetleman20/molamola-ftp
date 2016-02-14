@@ -111,7 +111,7 @@ int req_get(int sockfd, struct message_s *msg)
         fstat(local_fd, &st);
         /* send FILE_DATA header */
         write_head(sockfd, TYPE_FILE_DATA, STATUS_UNUSED, st.st_size);
-        int ret = transfer_file_sys(sockfd, local_fd, st.st_size);
+        int ret = transfer_file_sys(sockfd, local_fd, st.st_size, NULL);
         close(local_fd);
         if (ret == -1)
                 close_serving_thread(sockfd);
@@ -135,7 +135,7 @@ int req_put(int sockfd, struct message_s *msg)
         read_head(sockfd, &recv_msg);
 
         off_t size = payload_size(&recv_msg);
-        int ret = transfer_file_copy(saveto_fd, sockfd, size);
+        int ret = transfer_file_copy(saveto_fd, sockfd, size, NULL);
         close(saveto_fd);
         if (ret == -1)
                 close_serving_thread(sockfd);
