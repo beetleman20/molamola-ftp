@@ -1,3 +1,6 @@
+/*
+ * Functions that handle specific commands
+ */
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -6,15 +9,9 @@
 #include <stdbool.h>
 #include <sys/stat.h>
 #include "request_handlers.h"
-#include "common_utils/readwrite.h"
-#include "common_utils/protocol_utils.h"
+#include "accepter.h"
 #include "server_main.h"
-
-/*
- * Functions that handle specific commands
- * The spec is not specific on the status field of some command.  Here I assume
- * 0x01 in those cases.
- */
+#include "common_utils/readwrite.h"
 
 int req_auth(int sockfd, struct message_s *msg);
 int req_get(int sockfd, struct message_s *msg);
@@ -27,6 +24,21 @@ struct req_info {
 struct req_info req_list[] = {
         {TYPE_GET_REQ, req_get},
 };
+
+/*
+ * ending in C, meaning they Close thread on error or remote socket close
+ */
+void sread_C(int threadfd, void *buf, unsigned int len)
+{
+        if (sread(threadfd, buf, len) == -1)
+                close_serving_thread(threadfd);
+}
+void transfer_file_sys_C(int threadfd, int out_fd, int in_fd, off_t num_send)
+{
+        if (transfer_file_sys(out_fd, in_fd, num_send) == -1)
+                close_serving_thread(threadfd);
+}
+
 
 req_handler get_handler(char type_code)
 {
@@ -43,8 +55,6 @@ char *payload_malloc(int sockfd, struct message_s *msg, bool is_str)
         /*
          * load a payload from socket.
          * WARNING: Don't use this function to read ~MB from socket
-         * because it will out of memory.  Use the sendfile() system call.
-         * sendfile() is a library function in sparc machine.
          */
         ssize_t len = msg->length - sizeof(struct message_s);
         size_t buf_size = is_str ? len + 1 : len;
@@ -53,7 +63,7 @@ char *payload_malloc(int sockfd, struct message_s *msg, bool is_str)
                 perror("malloc error");
                 exit(1);
         }
-        sread(sockfd, payload, len);
+        sread_C(sockfd, payload, len);
         return payload;
 }
 
@@ -82,10 +92,7 @@ int req_auth(int sockfd, struct message_s *msg)
         }
         free(payload);
 
-        if (res == 0)
-                write_head(sockfd, 0xA2, 1, 0);
-        else
-                write_head(sockfd, 0xA2, 0, 0);
+        write_head(sockfd, TYPE_AUTH_REP, (res == 0 ? 1 : 0), 0);
 
         return res;
 }
@@ -112,10 +119,7 @@ int req_get(int sockfd, struct message_s *msg)
         stat(filepath, &st);
         /* send FILE_DATA header */
         write_head(sockfd, TYPE_FILE_DATA, STATUS_UNUSED, st.st_size);
-        if (transfer_file_sys(sockfd, local_fd, st.st_size) == -1) {
-                perror("error sending file");
-                return -1;
-        }
+        transfer_file_sys_C(sockfd, sockfd, local_fd, st.st_size);
 
         close(local_fd);
         return 0;

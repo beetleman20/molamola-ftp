@@ -9,7 +9,7 @@
 #include "command_handlers.h"
 #include "common_utils/readwrite.h"
 #include "common_utils/protocol_utils.h"
-#include "common_utils/make_socket.h"
+#include "common_utils/sysadmin.h"
 
 /*
  * Functions that handle specific commands
@@ -87,7 +87,7 @@ int handler_open(struct state *mystate, char *arg)
 int handler_auth(struct state *mystate, char *arg)
 {
         struct message_s recv_msg;
-        write_head(mystate->sockfd, TYPE_AUTH, STATUS_UNUSED, strlen(arg));
+        write_head(mystate->sockfd, TYPE_AUTH_REQ, STATUS_UNUSED, strlen(arg));
         swrite(mystate->sockfd, arg, strlen(arg));
         read_head(mystate->sockfd, &recv_msg);
         if (recv_msg.status == 1) {

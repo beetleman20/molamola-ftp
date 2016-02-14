@@ -5,7 +5,8 @@
 
 #define TYPE_OPEN_REQ 0xA1
 #define TYPE_OPEN_REP 0xA2
-#define TYPE_AUTH 0xA3
+#define TYPE_AUTH_REQ 0xA3
+#define TYPE_AUTH_REP 0xA4
 #define TYPE_GET_REQ 0xA7
 #define TYPE_GET_REP 0xA8
 #define TYPE_FILE_DATA 0xFF

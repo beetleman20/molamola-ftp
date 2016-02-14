@@ -11,40 +11,40 @@
 #include "readwrite.h"
 
 /*
- * guarantee len bytes read from sockfd
+ * guarantee len bytes read from fd
  */
-int swrite(int sockfd, void *buf, unsigned int len)
+int swrite(int fd, void *buf, unsigned int len)
 {
         ssize_t ret;
-        while (len > 0 && (ret = write(sockfd, buf, len)) != 0) {
+        while (len > 0 && (ret = write(fd, buf, len)) != 0) {
                 printf("somthing written %d\n", ret);
                 /* if other side closed connection, -1 will be recieved
                  * with errno EPIPE */
                 if (ret == -1) {
                         if (errno == EINTR)
                                 continue;
-                        perror("Error writing socket");
+                        perror("Error writing fd");
                         return -1;
                 }
                 buf += ret;
                 len -= ret;
         }
-        return 1;
+        return 0;
 }
 
 /*
- * guarantee len bytes written to sockfd
+ * guarantee len bytes written to fd
  */
-int sread(int sockfd, void *buf, unsigned int len)
+int sread(int fd, void *buf, unsigned int len)
 {
         ssize_t ret;
         while (len > 0) {
-                ret = read(sockfd, buf, len);
+                ret = read(fd, buf, len);
                 printf("somthing read %d\n", ret);
                 if (ret == -1) {
                         if (errno == EINTR)
                                 continue;
-                        perror("Error reading socket");
+                        perror("Error reading fd");
                         return -1;
                 } else if (ret == 0) {
                         /* the other side closed connection */
@@ -53,11 +53,11 @@ int sread(int sockfd, void *buf, unsigned int len)
                 buf += ret;
                 len -= ret;
         }
-        return 1;
+        return 0;
 }
 
 /*
- * copy file by the os kernel
+ * copy file by the os kernel, in_fd must NOT be socket
  * this function is modified from "vsftpd, ftpdataio.c" 
  */
 int transfer_file_sys(int out_fd, int in_fd, off_t num_send)

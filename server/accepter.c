@@ -3,18 +3,27 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 #include "request_handlers.h"
 #include "accepter.h"
+#include "common_utils/readwrite.h"
+
+void read_head_C(int threadfd, struct message_s *msg)
+{
+        if (read_head(threadfd, msg) == -1)
+                close_serving_thread(threadfd);
+}
 
 int wait_authenicated(int sockfd)
 {
         /* authenicate.  Should only handle "open" and "auth" request */
         struct message_s head_recv;
 
-        while (read_head(sockfd, &head_recv) != -1) {
+        while (1) {
+                read_head_C(sockfd, &head_recv);
                 if (head_recv.type == TYPE_OPEN_REQ) {
                         /* TODO: reply */
-                } else if (head_recv.type == TYPE_AUTH) {
+                } else if (head_recv.type == TYPE_AUTH_REQ) {
                         if (req_auth(sockfd, &head_recv) == 0)
                                 return 0;
                         else
@@ -22,25 +31,24 @@ int wait_authenicated(int sockfd)
                 } else {
                         fprintf(stderr,
                                 "client unsuitably sneding Request %02x\n"
-                                "closing connection\n", head_recv.type);
+                                , head_recv.type);
                         return -1;
                 }
         }
-
-        return -1;
 }
 
 void dedicated_serve(int sockfd)
 {
         if (wait_authenicated(sockfd) == -1) {
-                printf("connection closed without authenication\n");
-                return;
+                printf("authenication has problem\n");
+                close_serving_thread(sockfd);
         }
 
         /* now it is authenicated */
         struct message_s head_recv;
 
-        while (read_head(sockfd, &head_recv) != -1) {
+        while (1) {
+                read_head_C(sockfd, &head_recv);
                 req_handler handler = get_handler(head_recv.type);
                 printf("Received request: %02x\n", head_recv.type);
                 if (!handler) {
@@ -84,4 +92,11 @@ void serve(int sockfd)
         }
 
         accept_loop(sockfd);
+}
+
+void close_serving_thread(int sockfd)
+{
+        close(sockfd);
+        puts("TODO: should terminate the thread here. exit for now");
+        exit(0);
 }

@@ -13,9 +13,9 @@ CC_CMD = $(CC) $(CFLAGS) -o $@ -c $<
 
 default: client_main server_main
 
-client_main: make_socket.o protocol_utils.o readwrite.o client_main.o repl.o command_handlers.o
+client_main: sysadmin.o protocol_utils.o readwrite.o client_main.o repl.o command_handlers.o
 
-server_main: make_socket.o protocol_utils.o readwrite.o accepter.o request_handlers.o
+server_main: sysadmin.o protocol_utils.o readwrite.o accepter.o request_handlers.o
 
 .PHONY: clean
 
