@@ -17,6 +17,8 @@
 #define TYPE_PUT_REQ 0xA9
 #define TYPE_PUT_REP 0xAA
 #define TYPE_FILE_DATA 0xFF
+#define TYPE_QUIT_REQ 0xAB
+#define TYPE_QUIT_REP 0xAC
 
 #define STATUS_UNUSED 0x00
 

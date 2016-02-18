@@ -78,8 +78,11 @@ int handler_open(struct state *mystate, char *arg)
                 fputs("Error: Server port not given", stderr);
                 return -1;
         }
-        /* TODO: validate port */
         dest_addr.sin_port = htons(atoi(dest_port));
+        if (dest_addr.sin_port <= 0 || dest_addr.sin_port> 65535) {
+                fputs("Error: Server port out of range", stderr);
+                return -1;
+        }
 
         int sockfd = make_socket(NULL, 0);
         if (connect(sockfd, (struct sockaddr *)&dest_addr,
@@ -90,6 +93,10 @@ int handler_open(struct state *mystate, char *arg)
         }
 
         /* TODO: send OPEN_CONN_REQUEST */
+        struct message_s recv_msg;
+        write_head(sockfd, TYPE_OPEN_REQ, STATUS_UNUSED, 0);
+        read_head(sockfd, &recv_msg);
+
         mystate->sockfd = sockfd;
         mystate->status = OPENED;
         return 0;
@@ -189,7 +196,12 @@ int handler_put(struct state *mystate, char *filepath)
 
 int handler_exit(struct state *mystate, char *arg)
 {
-        /* TODO: close socket */
+        if (mystate->status == AUTHED) {
+                write_head(mystate->sockfd, TYPE_QUIT_REQ, STATUS_UNUSED, 0);
+                struct message_s recv_msg;
+                read_head(mystate->sockfd, &recv_msg);
+                close(mystate->sockfd);
+        }
         puts("bye");
         exit(0);
 }

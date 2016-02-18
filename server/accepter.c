@@ -22,7 +22,7 @@ int wait_authenicated(int sockfd)
         while (1) {
                 read_head_C(sockfd, &head_recv);
                 if (head_recv.type == TYPE_OPEN_REQ) {
-                        /* TODO: reply */
+                        req_open(sockfd, &head_recv);
                 } else if (head_recv.type == TYPE_AUTH_REQ) {
                         if (req_auth(sockfd, &head_recv) == 0)
                                 return 0;

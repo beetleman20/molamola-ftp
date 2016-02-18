@@ -13,9 +13,9 @@
 #include "server_main.h"
 #include "common_utils/readwrite.h"
 
-int req_auth(int sockfd, struct message_s *msg);
 int req_get(int sockfd, struct message_s *msg);
 int req_put(int sockfd, struct message_s *msg);
+int req_quit(int sockfd, struct message_s *msg);
 
 struct req_info {
         char type_code;
@@ -25,6 +25,7 @@ struct req_info {
 struct req_info req_list[] = {
         {TYPE_GET_REQ, req_get},
         {TYPE_PUT_REQ, req_put},
+        {TYPE_QUIT_REQ, req_quit},
 };
 
 /*
@@ -62,6 +63,21 @@ char *payload_malloc(int sockfd, struct message_s *msg, bool is_str)
         }
         sread_C(sockfd, payload, len);
         return payload;
+}
+
+int req_open(int sockfd, struct message_s *msg)
+{
+        write_head(sockfd, TYPE_OPEN_REP, 1, 0);
+        return 0;
+}
+
+
+int req_quit(int sockfd, struct message_s *msg)
+{
+        write_head(sockfd, TYPE_QUIT_REP, STATUS_UNUSED, 0);
+        puts("client request to quit");
+        close_serving_thread(sockfd);
+        return 0;
 }
 
 int req_auth(int sockfd, struct message_s *msg)
