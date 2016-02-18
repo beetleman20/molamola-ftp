@@ -1,4 +1,5 @@
 #define USER_INFO_FILE "access.txt"
+#define ROOT_DIR "filedir"
 #define USER_MAX 4096
 
 struct user {

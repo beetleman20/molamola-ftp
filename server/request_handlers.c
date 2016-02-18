@@ -38,6 +38,15 @@ void sread_C(int threadfd, void *buf, unsigned int len)
 }
 
 
+char *make_path(char *fpath)
+{
+        char *p = malloc(strlen(ROOT_DIR) + strlen(fpath) + 2);
+        strcat(p, ROOT_DIR);
+        strcat(p, "/");
+        strcat(p, fpath);
+        return p;
+}
+
 req_handler get_handler(char type_code)
 {
         for (int i=0; i < sizeof(req_list)/sizeof(struct req_info); i++) {
@@ -113,8 +122,10 @@ int req_auth(int sockfd, struct message_s *msg)
 int req_get(int sockfd, struct message_s *msg)
 {
         char *filepath = payload_malloc(sockfd, msg, true);
-        int local_fd = open(filepath, O_RDONLY);
+        char *repopath = make_path(filepath);
+        int local_fd = open(repopath, O_RDONLY);
         free(filepath);
+        free(repopath);
         if (local_fd == -1) {
                 write_head(sockfd, TYPE_GET_REP, 0, 0);
                 /* though not readable, don't terminate because it is legal */
@@ -142,7 +153,10 @@ int req_get(int sockfd, struct message_s *msg)
 int req_put(int sockfd, struct message_s *msg)
 {
         char *filepath = payload_malloc(sockfd, msg, true);
-        int saveto_fd = open(filepath, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
+        char *repopath = make_path(filepath);
+        int saveto_fd = open(repopath, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
+        free(filepath);
+        free(repopath);
         if (saveto_fd == -1) {
                 perror("cannot open file to write");
                 close_serving_thread(sockfd);
