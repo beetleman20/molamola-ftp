@@ -29,6 +29,7 @@ struct req_info {
 struct req_info req_list[] = {
         {TYPE_GET_REQ, req_get},
         {TYPE_PUT_REQ, req_put},
+	    {TYPE_LS_REQ,  list_dr},
 };
 
 /*
@@ -181,5 +182,7 @@ int list_dir(int sockfd, struct message_s *msg)
     }
 
     return 0;
-
+	
+	
+	
 }
