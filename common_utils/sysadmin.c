@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
 
 void error_exit(char *msg)
@@ -39,7 +40,7 @@ int make_socket(char *port_str, int reuse)
                 struct sockaddr_in my_addr = {
                         .sin_family = AF_INET,
                         .sin_port = htons(given_port),
-                        .sin_addr = {INADDR_ANY}
+                        .sin_addr = {.s_addr = INADDR_ANY}
                 };
 
                 if (bind(sockfd, (struct sockaddr *)&my_addr,

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
@@ -65,10 +66,12 @@ int handler_open(struct state *mystate, char *arg)
                 .sin_family = AF_INET,
         };
 
-        if (!inet_aton(strtok(arg, " "), &(dest_addr.sin_addr))) {
+        in_addr_t addr = inet_addr(strtok(arg, " "));
+        if (addr == -1) {
                 fputs("invalid ip", stderr);
                 return -1;
         }
+        dest_addr.sin_addr.s_addr = addr;
 
         char * dest_port = strtok(NULL, " ");
         if (!dest_port) {
@@ -169,7 +172,11 @@ int handler_put(struct state *mystate, char *filepath)
         struct stat st;
         fstat(local_fd, &st);
         write_head(mystate->sockfd, TYPE_FILE_DATA, STATUS_UNUSED, st.st_size);
+#ifdef __linux__
         int ret = transfer_file_sys(mystate->sockfd, local_fd, st.st_size, prog);
+#else
+        int ret = transfer_file_copy(mystate->sockfd, local_fd, st.st_size, prog);
+#endif
         puts("");
         close(local_fd);
         if (ret == -1) {

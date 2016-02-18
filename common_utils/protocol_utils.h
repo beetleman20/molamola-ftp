@@ -1,3 +1,8 @@
+#if defined(sun) || defined(__sun)
+  #include <sys/int_types.h>
+#else
+  #include <stdint.h>
+#endif
 #include <sys/types.h>
 
 #ifndef PROTOCOL_UTILS_H
@@ -19,12 +24,13 @@ extern char fingerprint[];
 
 struct message_s {
         char protocol[6];
-        char type;
-        char status;
-        int length;
+        unsigned char type;
+        unsigned char status;
+        unsigned int length;
 }  __attribute__ ((packed));
 
-int write_head(int sockfd, char type, char status, int length);
+int write_head(int sockfd, unsigned char type,
+               unsigned char status, uint32_t payload_length);
 int read_head(int sockfd, struct message_s *msg);
 off_t payload_size(struct message_s *msg);
 

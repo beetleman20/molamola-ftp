@@ -1,6 +1,11 @@
 CC = gcc
-CFLAGS = -std=gnu99 -Wall -I. -Og
+CFLAGS = -std=gnu99 -Wall -I. -O1
 CC_CMD = $(CC) $(CFLAGS) -o $@ -c $<
+
+UNAME := $(shell uname)
+ifeq ($(UNAME), SunOS)
+LDFLAGS = -lsocket -lnsl
+endif
 
 %.o: client/%.c
 	$(CC_CMD)

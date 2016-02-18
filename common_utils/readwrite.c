@@ -60,6 +60,7 @@ int sread(int fd, void *buf, unsigned int len)
         return 0;
 }
 
+#ifdef __linux__
 /*
  * copy file by the os kernel, in_fd must NOT be socket
  * this function is modified from "vsftpd, ftpdataio.c" 
@@ -85,6 +86,7 @@ int transfer_file_sys(int out_fd, int in_fd, off_t size_remain,
         }
         return 0;
 }
+#endif
 
 /*
  * a slower version, but cross platform

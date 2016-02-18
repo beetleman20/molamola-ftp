@@ -111,7 +111,11 @@ int req_get(int sockfd, struct message_s *msg)
         fstat(local_fd, &st);
         /* send FILE_DATA header */
         write_head(sockfd, TYPE_FILE_DATA, STATUS_UNUSED, st.st_size);
+#ifdef __linux__
         int ret = transfer_file_sys(sockfd, local_fd, st.st_size, NULL);
+#else
+        int ret = transfer_file_copy(sockfd, local_fd, st.st_size, NULL);
+#endif
         close(local_fd);
         if (ret == -1)
                 close_serving_thread(sockfd);
