@@ -16,10 +16,10 @@ endif
 %.o: common_utils/%.c
 	$(CC_CMD)
 
+default: client_main server_main
+
 debug: CFLAGS += -D_DEBUG -g
 debug: default
-
-default: client_main server_main
 
 client_main: sysadmin.o protocol_utils.o readwrite.o client_main.o repl.o command_handlers.o
 
